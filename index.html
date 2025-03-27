@@ -23,18 +23,24 @@
                 document.getElementById("game-container").appendChild(player);
                 player.load("papasfreezeria.swf");
 
-                // Load saved progress
-                let savedData = localStorage.getItem("freezeriaSave");
-                if (savedData) {
-                    player.setSaveState(JSON.parse(savedData));
-                }
+                // Check if localStorage is available
+                if (typeof(Storage) !== "undefined") {
+                    // Load saved progress if it exists
+                    let savedData = localStorage.getItem("freezeriaSave");
+                    if (savedData) {
+                        player.setSaveState(JSON.parse(savedData));
+                    }
 
-                // Save progress when game state changes
-                player.addEventListener("save-state", (event) => {
-                    localStorage.setItem("freezeriaSave", JSON.stringify(event.detail));
-                });
+                    // Save progress when game state changes
+                    player.addEventListener("save-state", (event) => {
+                        localStorage.setItem("freezeriaSave", JSON.stringify(event.detail));
+                    });
+                } else {
+                    console.error("Local Storage is not available on this browser.");
+                }
             });
         </script>
     </div>
 </body>
 </html>
+
