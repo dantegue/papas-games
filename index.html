@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papa's Freezeria</title>
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+    <style>
+        * { margin: 0; padding: 0; overflow: hidden; }
+        html, body { width: 100%; height: 100%; background: black; }
+        #game-container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <script>
+            window.RufflePlayer = window.RufflePlayer || {};
+            window.addEventListener("DOMContentLoaded", () => {
+                const ruffle = window.RufflePlayer.newest();
+                const player = ruffle.createPlayer();
+                player.style.width = "100vw";
+                player.style.height = "100vh";
+                document.getElementById("game-container").appendChild(player);
+                player.load("papasfreezeria.swf");
+
+                // Load saved progress
+                let savedData = localStorage.getItem("freezeriaSave");
+                if (savedData) {
+                    player.setSaveState(JSON.parse(savedData));
+                }
+
+                // Save progress when game state changes
+                player.addEventListener("save-state", (event) => {
+                    localStorage.setItem("freezeriaSave", JSON.stringify(event.detail));
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>
