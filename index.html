@@ -8,74 +8,63 @@
     <style>
         * { margin: 0; padding: 0; overflow: hidden; }
         html, body { width: 100%; height: 100%; background: black; }
-        #game-container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; display: none; }
-        #start-button {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 15px 30px;
-            font-size: 18px;
-            background-color: white;
-            color: black;
-            border: none;
-            cursor: pointer;
-            z-index: 10;
-        }
+        #game-container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
-    <button id="start-button">Click to Play</button>
     <div id="game-container"></div>
 
     <script>
         window.RufflePlayer = window.RufflePlayer || {};
 
-        document.getElementById("start-button").addEventListener("click", () => {
-            document.getElementById("start-button").style.display = "none"; // Hide button
-            document.getElementById("game-container").style.display = "flex"; // Show game
+        document.addEventListener("DOMContentLoaded", () => {
+            const ruffle = window.RufflePlayer.newest();
+            const player = ruffle.createPlayer();
 
-            setTimeout(() => {  // Delay to make sure Safari registers interaction
-                const ruffle = window.RufflePlayer.newest();
-                const player = ruffle.createPlayer();
+            // Fix MacBook input issues
+            player.allowScriptAccess = true;
+            player.allowfullscreen = true;
+            player.style.width = "100vw";
+            player.style.height = "100vh";
 
-                // Make sure Ruffle properly detects input
-                player.allowScriptAccess = true;
-                player.allowfullscreen = true;
-                player.style.width = "100vw";
-                player.style.height = "100vh";
+            // Fix "Play" button issue by forcing proper SWF execution
+            player.config = {
+                "logLevel": "error", 
+                "polyfills": true,
+                "unmuteOnMouseInteraction": "once", // Ensures audio works properly
+                "letterbox": "on",
+                "allowNetworking": "all",
+                "allowScriptAccess": "always"
+            };
 
-                document.getElementById("game-container").appendChild(player);
-                player.load("papasfreezeria.swf");
+            document.getElementById("game-container").appendChild(player);
+            player.load("papasfreezeria.swf");
 
-                // Fix MacBook click issues by forcing focus
-                player.focus();
-                document.addEventListener("click", () => player.focus());
+            // Fix for game progress not loading properly
+            let canUseLocalStorage = true;
+            try {
+                localStorage.setItem("test", "test");
+                localStorage.removeItem("test");
+            } catch (e) {
+                canUseLocalStorage = false;
+                console.warn("Local Storage not available.");
+            }
 
-                // Check if localStorage is available
-                let canUseLocalStorage = true;
-                try {
-                    localStorage.setItem("test", "test");
-                    localStorage.removeItem("test");
-                } catch (e) {
-                    canUseLocalStorage = false;
-                    console.warn("Local Storage not available on this browser.");
+            if (canUseLocalStorage) {
+                let savedData = localStorage.getItem("freezeriaSave");
+                if (savedData) {
+                    player.setSaveState(JSON.parse(savedData));
                 }
 
-                // Load saved progress (only if allowed)
-                if (canUseLocalStorage) {
-                    let savedData = localStorage.getItem("freezeriaSave");
-                    if (savedData) {
-                        player.setSaveState(JSON.parse(savedData));
-                    }
+                player.addEventListener("save-state", (event) => {
+                    localStorage.setItem("freezeriaSave", JSON.stringify(event.detail));
+                });
+            }
 
-                    // Save progress when game state changes
-                    player.addEventListener("save-state", (event) => {
-                        localStorage.setItem("freezeriaSave", JSON.stringify(event.detail));
-                    });
-                }
-            }, 500); // 0.5s delay to ensure Safari registers click
-        }, { once: true }); // Runs only once
+            // Fix for MacBooks: Ensure game input is registered
+            player.focus();
+            document.addEventListener("click", () => player.focus());
+        });
     </script>
 </body>
 </html>
