@@ -9,38 +9,46 @@
         * { margin: 0; padding: 0; overflow: hidden; }
         html, body { width: 100%; height: 100%; background: black; }
         #game-container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        iframe { width: 100vw; height: 100vh; border: none; }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <script>
-            window.RufflePlayer = window.RufflePlayer || {};
-            window.addEventListener("DOMContentLoaded", () => {
-                const ruffle = window.RufflePlayer.newest();
-                const player = ruffle.createPlayer();
-                player.style.width = "100vw";
-                player.style.height = "100vh";
-                document.getElementById("game-container").appendChild(player);
-                player.load("papasfreezeria.swf");
+        <iframe id="game-frame" sandbox="allow-scripts allow-same-origin"></iframe>
+    </div>
 
-                // Check if localStorage is available
+    <script>
+        window.RufflePlayer = window.RufflePlayer || {};
+        window.addEventListener("DOMContentLoaded", () => {
+            const ruffle = window.RufflePlayer.newest();
+            const player = ruffle.createPlayer();
+            player.style.width = "100vw";
+            player.style.height = "100vh";
+
+            // Embed inside an iframe to prevent Safari sandboxing issues
+            const gameFrame = document.getElementById("game-frame").contentWindow.document;
+            gameFrame.open();
+            gameFrame.write('<body style="margin:0; background:black;"></body>');
+            gameFrame.body.appendChild(player);
+
+            player.load("papasfreezeria.swf");
+
+            // Safari: Ensure localStorage works only after user interaction
+            document.body.addEventListener("click", () => {
                 if (typeof(Storage) !== "undefined") {
-                    // Load saved progress if it exists
                     let savedData = localStorage.getItem("freezeriaSave");
                     if (savedData) {
                         player.setSaveState(JSON.parse(savedData));
                     }
 
-                    // Save progress when game state changes
                     player.addEventListener("save-state", (event) => {
                         localStorage.setItem("freezeriaSave", JSON.stringify(event.detail));
                     });
                 } else {
                     console.error("Local Storage is not available on this browser.");
                 }
-            });
-        </script>
-    </div>
+            }, { once: true }); // Ensures it only runs once after first click
+        });
+    </script>
 </body>
 </html>
-
