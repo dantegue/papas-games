@@ -8,7 +8,7 @@
     <style>
         * { margin: 0; padding: 0; overflow: hidden; }
         html, body { width: 100%; height: 100%; background: black; }
-        #game-container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        #game-container { width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; display: none; }
         #start-button {
             position: absolute;
             top: 50%;
@@ -25,37 +25,48 @@
     </style>
 </head>
 <body>
-    <button id="start-button">Click to Start</button>
-    <div id="game-container" style="display: none;"></div>
+    <button id="start-button">Click to Play</button>
+    <div id="game-container"></div>
 
     <script>
         window.RufflePlayer = window.RufflePlayer || {};
-        
+
         document.getElementById("start-button").addEventListener("click", () => {
             document.getElementById("start-button").style.display = "none"; // Hide button
             document.getElementById("game-container").style.display = "flex"; // Show game
 
-            const ruffle = window.RufflePlayer.newest();
-            const player = ruffle.createPlayer();
-            player.style.width = "100vw";
-            player.style.height = "100vh";
-            document.getElementById("game-container").appendChild(player);
-            player.load("papasfreezeria.swf");
+            setTimeout(() => {  // Delay to make sure Safari registers interaction
+                const ruffle = window.RufflePlayer.newest();
+                const player = ruffle.createPlayer();
+                player.style.width = "100vw";
+                player.style.height = "100vh";
+                document.getElementById("game-container").appendChild(player);
+                player.load("papasfreezeria.swf");
 
-            // Enable localStorage only after user clicks
-            if (typeof(Storage) !== "undefined") {
-                let savedData = localStorage.getItem("freezeriaSave");
-                if (savedData) {
-                    player.setSaveState(JSON.parse(savedData));
+                // Local Storage workaround for Safari
+                let canUseLocalStorage = true;
+                try {
+                    localStorage.setItem("test", "test");
+                    localStorage.removeItem("test");
+                } catch (e) {
+                    canUseLocalStorage = false;
+                    console.warn("Local Storage not available on this browser.");
                 }
 
-                player.addEventListener("save-state", (event) => {
-                    localStorage.setItem("freezeriaSave", JSON.stringify(event.detail));
-                });
-            } else {
-                console.error("Local Storage is not available on this browser.");
-            }
-        }, { once: true }); // Ensures it runs only once
+                // Load saved progress (only if allowed)
+                if (canUseLocalStorage) {
+                    let savedData = localStorage.getItem("freezeriaSave");
+                    if (savedData) {
+                        player.setSaveState(JSON.parse(savedData));
+                    }
+
+                    // Save progress when game state changes
+                    player.addEventListener("save-state", (event) => {
+                        localStorage.setItem("freezeriaSave", JSON.stringify(event.detail));
+                    });
+                }
+            }, 500); // 0.5s delay to ensure Safari registers click
+        }, { once: true }); // Runs only once
     </script>
 </body>
 </html>
