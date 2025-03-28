@@ -38,12 +38,21 @@
             setTimeout(() => {  // Delay to make sure Safari registers interaction
                 const ruffle = window.RufflePlayer.newest();
                 const player = ruffle.createPlayer();
+
+                // Make sure Ruffle properly detects input
+                player.allowScriptAccess = true;
+                player.allowfullscreen = true;
                 player.style.width = "100vw";
                 player.style.height = "100vh";
+
                 document.getElementById("game-container").appendChild(player);
                 player.load("papasfreezeria.swf");
 
-                // Local Storage workaround for Safari
+                // Fix MacBook click issues by forcing focus
+                player.focus();
+                document.addEventListener("click", () => player.focus());
+
+                // Check if localStorage is available
                 let canUseLocalStorage = true;
                 try {
                     localStorage.setItem("test", "test");
